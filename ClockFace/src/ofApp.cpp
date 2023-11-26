@@ -13,7 +13,7 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    cout << "Frame Rate: " << ofGetFrameRate() << endl;
+//    cout << "Frame Rate: " << ofGetFrameRate() << endl;
     
     // get current system time
     currHr = ofGetHours();
@@ -22,7 +22,7 @@ void ofApp::update(){
     currSec = fmod(currSec, 60.0);
     oriSec = ofGetSeconds();
 //    cout << currHr << ":" << currMin << ":" << currSec << endl;
-    cout << currSec << endl;
+//    cout << currSec << endl;
     
     // calculate rotation radius for clock hands
     hrHandRad = PI + currHr / 6.0 * PI;
@@ -48,7 +48,7 @@ void ofApp::draw(){
     
     // second hand
     drawClockHand("second", secHandRad);
-    drawClockHand("second", oriSecHandRad);
+//    drawClockHand("second", oriSecHandRad);
     
     // minute hand
     drawClockHand("minute", minHandRad);
