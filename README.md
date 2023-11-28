@@ -24,7 +24,7 @@ Display real-time clock.
 
 ---
 #### Documentation
-####1. People Detection
+#### 1. People Detection
 
 Single-user detection
 
