@@ -214,7 +214,7 @@ void ofApp::draw(){
 void ofApp::drawProjector(ofEventArgs& args)
 {
   
-    ofBackground(128);
+    ofBackground(255);
 //  ofEnableBlendMode(OF_BLENDMODE_MULTIPLY);
 
     
