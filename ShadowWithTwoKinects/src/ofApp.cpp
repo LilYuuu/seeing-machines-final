@@ -14,8 +14,8 @@ void ofApp::setup(){
     
     
     // Setup the parameters.
-    nearThreshold_shadow.set("Near Threshold", 0.02f, 0.0f, 0.1f);
-    farThreshold_shadow.set("Far Threshold", 0.03f, 0.0f, 0.1f);
+    nearThreshold_shadow.set("Near Threshold (Shadow)", 0.02f, 0.0f, 0.1f);
+    farThreshold_shadow.set("Far Threshold (Shadow)", 0.03f, 0.0f, 0.1f);
     
     // Setup the gui.
     gui.setup("Depth Threshold", "settings.json");
@@ -27,7 +27,7 @@ void ofApp::setup(){
 
     
     /* ----- KINECT1 ----- */
-    // kinect 1 , the one to get the outline of user
+    // shadow capturing
     kinects[0].setRegistration(true);
     kinects[0].init();
     kinects[0].open();
@@ -38,24 +38,21 @@ void ofApp::setup(){
 
     
     /* ----- KINECT2 ----- */
-//    kinect 2 , the one on the ceiling
-
+    // movement detection on ceiling
     kinects[1].setRegistration(true);
     kinects[1].init();
     kinects[1].open();
 
     // color img initialization
-    colorImg2.allocate(kinects[0].getWidth(), kinects[0].getHeight());
-    // Fbo img initialization
-    maskFbo2.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA);
+    colorImg_ceiling.allocate(kinects[0].getWidth(), kinects[0].getHeight());
 
     // Setup the parameters for kinect2.
-    nearThreshold2.set("Near Threshold2", 0.03f, 0.0f, 0.1f);
-    farThreshold2.set("Far Threshold2", 0.07f, 0.0f, 0.1f);
+    nearThreshold_ceiling.set("Near Threshold (Ceiling)", 0.03f, 0.0f, 0.1f);
+    farThreshold_ceiling.set("Far Threshold (Ceiling)", 0.07f, 0.0f, 0.1f);
 
     // Add Kinect2 to the gui.
-    gui.add(nearThreshold2);
-    gui.add(farThreshold2);
+    gui.add(nearThreshold_ceiling);
+    gui.add(farThreshold_ceiling);
 
 
 
@@ -85,10 +82,6 @@ void ofApp::update(){
     kinects[a].update();
     cout << "kinect /// WIDTH:" << kinects[a].getWidth() << " HEIGHT:" << kinects[a].getHeight() << endl ;
     
-    mixFbo.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA);
-    cout << "mixFbo /// WIDTH:" << mixFbo.getWidth() << " mixFbo HEIGHT:" << mixFbo.getHeight() << endl ;
-   
-    
     if (kinects[a].isFrameNew()){
                 
         ofFloatPixels rawDepthPix = kinects[a].getRawDepthPixels();
@@ -103,10 +96,10 @@ void ofApp::update(){
         int minimum = thresholdImg_shadow.getWidth() * thresholdImg_shadow.getHeight() * 0.01;
         int maximum = thresholdImg_shadow.getWidth() * thresholdImg_shadow.getHeight() * 1;
         
-        contourFinder_shadow.findContours(thresholdImg_shadow, minimum, maximum, 5, false);
+        contourFinder_shadow.findContours(thresholdImg_shadow, minimum, maximum, 1, false);
     }
     
-    // draw the contour & Blob on maskFbo ( Kinect1's fbo)
+    // draw shadow on an fbo
     shadowFbo.begin();
     ofClear(255, 255, 255);
     if (contourFinder_shadow.nBlobs > 0) {
@@ -129,7 +122,7 @@ void ofApp::update(){
     }
     shadowFbo.end();
     
-    // ----- (maksFbo → pixel) ----- //
+    // ----- (fbo → pixel) ----- //
     // Fbo is greyScale img. now transfer to Pixel to add effects
     shadowFbo.readToPixels(ShadowPixels);
     //    ofxCv::erode(ShadowPixels, 5);
@@ -139,7 +132,7 @@ void ofApp::update(){
     
     
     // ----- (pixel → Texture) ----- //
-    // transfer Pixel to Texture, also draw to maskFbo
+    // transfer Pixel to Texture, also draw to fbo
     shadowFbo.begin();
 //    ofEnableBlendMode(OF_BLENDMODE_MULTIPLY);
     ShadowTexture.loadData(ShadowPixels);
@@ -164,77 +157,47 @@ void ofApp::update(){
     oriSecHandRad = PI + oriSec / 30.0 * PI;
     
     
-    
-    
-    
+        
     /* --------------- KINECT2 --------------- */
 
     kinects[b].update();
-//
-    if (kinects[b].isFrameNew()){
-//        // update color img
-        colorImg2.setFromPixels(kinects[b].getPixels());
-//
-//        // get pixel data from kinect
-        const ofFloatPixels & rawDepthPix2 = kinects[b].getRawDepthPixels();
-//
-//        // filter depth using thresholds
-        ofFloatPixels thresholdNear2, thresholdFar2, thresholdResult2;
-//
-        ofxCv::threshold(rawDepthPix2, thresholdNear2, nearThreshold2);
-        ofxCv::threshold(rawDepthPix2, thresholdFar2, farThreshold2, true);
-        ofxCv::bitwise_and(thresholdNear2, thresholdFar2, thresholdResult2);
-//
-//        cout << "thresholdResult2 BEFORE /// WIDTH:" << thresholdResult2.getWidth() << " HEIGHT:" << thresholdResult2.getHeight() << endl ;
-//
-//        thresholdResult2.resize(ofGetWindowWidth(), ofGetWindowHeight() );
-//
-//        cout << "thresholdResult2 AFTER /// WIDTH:" << thresholdResult2.getWidth() << " HEIGHT:" << thresholdResult2.getHeight() << endl ;
-//
-//
-//        //threshImg:GrayscaleImage
-        thresholdImg2.setFromPixels(thresholdResult2);
-        thresholdImg2.resize(ofGetWindowWidth(), ofGetWindowHeight() );
-//
-//
-//        //before find contour. rescale the result
-//        cout << "thresholdImg2 BEFORE /// WIDTH:" << thresholdImg2.width << " HEIGHT:" << thresholdImg2.height << endl ;
-//
-////        thresholdImg2.resize( ofGetWindowWidth(), ofGetWindowHeight()  );
-//        thresholdImg2.updateTexture();
-//
-//
-//        cout << "thresholdImg2 AFTER ////  WIDTH:" << thresholdImg2.width << " HEIGHT:" << thresholdImg2.height << endl ;
-//
-//        // contour size range
-        int minimum2 = thresholdImg2.getWidth() * thresholdImg2.getHeight() * 0.05;
-        int maximum2 = thresholdImg2.getWidth() * thresholdImg2.getHeight() * 0.8;
-//
-//        // look for contours
-        contourFinder2.findContours(thresholdImg2, minimum2, maximum2, 3, false);
-//        cout << "contourFinder2  WIDTH:" << contourFinder2.getWidth()<< " HEIGHT:" << contourFinder2.getHeight() << endl ;
-//
-    }
-//
-//    // draw the cameraView + contour & Blob on maskFbo2 ( Kinect2's fbo)
-//    maskFbo2.begin();
-//    ofClear(255, 255, 255);
-//    colorImg2.draw(0, 0);
-//    contourFinder2.draw(0, 0);
-//
-//    // draw centroids of the contour blobs
-//    if (contourFinder2.nBlobs > 0) {
-//        for (int i=0; i<contourFinder2.nBlobs; i++) {
-//            ofVec3f centroid2 = contourFinder2.blobs[i].centroid;
-////            ofPushStyle();
-////            ofSetColor(255,0,0);
-////            ofDrawCircle(centroid2, 20);
-////            ofPopStyle();
-//        }
-//    }
-//    maskFbo2.end();
- 
 
+    if (kinects[b].isFrameNew()){
+        // update color img
+        colorImg_ceiling.setFromPixels(kinects[b].getPixels());
+
+        // get pixel data from kinect
+        const ofFloatPixels & rawDepthPix2 = kinects[b].getRawDepthPixels();
+
+        // filter depth using thresholds
+        ofFloatPixels thresholdNear2, thresholdFar2, thresholdResult2;
+
+        ofxCv::threshold(rawDepthPix2, thresholdNear2, nearThreshold_ceiling);
+        ofxCv::threshold(rawDepthPix2, thresholdFar2, farThreshold_ceiling, true);
+        ofxCv::bitwise_and(thresholdNear2, thresholdFar2, thresholdResult2);
+
+//        cout << "thresholdResult2 BEFORE /// WIDTH:" << thresholdResult2.getWidth() << " HEIGHT:" << thresholdResult2.getHeight() << endl ;
+
+//        cout << "thresholdResult2 AFTER /// WIDTH:" << thresholdResult2.getWidth() << " HEIGHT:" << thresholdResult2.getHeight() << endl ;
+
+        thresholdImg_ceiling.setFromPixels(thresholdResult2);
+        thresholdImg_ceiling.resize(ofGetWindowWidth(), ofGetWindowHeight() );
+
+
+        //before find contour. rescale the result
+//        cout << "thresholdImg_ceiling BEFORE /// WIDTH:" << thresholdImg_ceiling.width << " HEIGHT:" << thresholdImg_ceiling.height << endl ;
+
+//        cout << "thresholdImg_ceiling AFTER ////  WIDTH:" << thresholdImg_ceiling.width << " HEIGHT:" << thresholdImg_ceiling.height << endl ;
+
+        // contour size range
+        int contourSizeMin_ceiling = thresholdImg_ceiling.getWidth() * thresholdImg_ceiling.getHeight() * 0.05;
+        int contourSizeMax_ceiling = thresholdImg_ceiling.getWidth() * thresholdImg_ceiling.getHeight() * 0.8;
+
+        // look for contours
+        contourFinder_ceiling.findContours(thresholdImg_ceiling, contourSizeMin_ceiling, contourSizeMax_ceiling, 1, false);
+//        cout << "contourFinder_ceiling  WIDTH:" << contourFinder_ceiling.getWidth()<< " HEIGHT:" << contourFinder_ceiling.getHeight() << endl ;
+
+    }
 }
 
 //--------------------------------------------------------------
@@ -242,23 +205,21 @@ void ofApp::draw(){
     
 //    ofBackground(255);
   
-//    colorImg2.draw(0, 0, ofGetWindowWidth(),ofGetWindowHeight());
-//    thresholdImg2.draw(0,0);
-    contourFinder2.draw(0,0);
-//    maskFbo2.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+//    colorImg_ceiling.draw(0, 0, ofGetWindowWidth(),ofGetWindowHeight());
+//    thresholdImg_ceiling.draw(0,0);
+    contourFinder_ceiling.draw(0,0);
 
-    if (contourFinder2.nBlobs > 0) {
+    if (contourFinder_ceiling.nBlobs > 0) {
  
-        
         ofPushMatrix();
-        ofTranslate(  (ofGetWindowWidth()/2-contourFinder2.blobs[0].centroid.x)*-1  ,(ofGetWindowHeight()/2-contourFinder2.blobs[0].centroid.y)*-1  );
+        ofTranslate(  (ofGetWindowWidth()/2 - contourFinder_ceiling.blobs[0].centroid.x) * (-1)  ,(ofGetWindowHeight()/2 - contourFinder_ceiling.blobs[0].centroid.y) * (-1) );
 
         
         /* ----- clock ----- */
         ofPushStyle();
-            ofSetColor(0);
-            ofNoFill();
-            ofSetLineWidth(3);
+        ofSetColor(0);
+        ofNoFill();
+        ofSetLineWidth(3);
             
         // clock face
         ofDrawCircle(ofGetWindowWidth()/2, ofGetWindowHeight()/2, 200);
@@ -268,48 +229,32 @@ void ofApp::draw(){
         //        ofTranslate(ofGetWindowWidth()/2, ofGetWindowHeight()/2);
         //        ofPopMatrix();
         
-            // clock hands
+        // clock hands
 
-            //    drawClockHand("second", secHandRad);
-            //    drawClockHand("minute", minHandRad);
-            //    drawClockHand("hour", hrHandRad);
+        //    drawClockHand("second", secHandRad);
+        //    drawClockHand("minute", minHandRad);
+        //    drawClockHand("hour", hrHandRad);
         
-        
-        
-        
-        
-        
-    
         ofPopStyle();
         
-//        maskFbo2.begin();
         /* ----- shadow ----- */
         drawShadowOnClock("second", secHandRad, shadowFbo);
         drawShadowOnClock("minute", minHandRad, shadowFbo);
         drawShadowOnClock("hour", hrHandRad, shadowFbo);
         
-//        maskFbo2.end();
-        
         ofPopMatrix();
-        
-        
     }
     
     
-        if (contourFinder2.nBlobs > 0) {
-            for (int i=0; i<contourFinder2.nBlobs; i++) {
-                ofVec3f centroid2 = contourFinder2.blobs[i].centroid;
-                ofPushStyle();
-                ofSetColor(255,0,0);
-                ofDrawCircle(centroid2, 20);
-                ofPopStyle();
-            }
+    if (contourFinder_ceiling.nBlobs > 0) {
+        for (int i=0; i<contourFinder_ceiling.nBlobs; i++) {
+            ofVec3f centroid_ceiling = contourFinder_ceiling.blobs[i].centroid;
+            ofPushStyle();
+            ofSetColor(255,0,0);
+            ofDrawCircle(centroid_ceiling, 20);
+            ofPopStyle();
         }
-    
-    
-    
-
-
+    }
     
     gui.draw();
     
@@ -335,7 +280,6 @@ void ofApp::drawShadowOnClock(string hand, float rotation, ofFbo fbo){
     
     ofTranslate(-80*3, -120*3);
     fbo.draw(0, 0, 160*3, 120*3);
-//    maskFbo.draw(0, 0, 160*2, 120*2);
     
     ofPopMatrix();
 }
@@ -378,15 +322,15 @@ void ofApp::keyPressed (int key) {
 //        #ifdef USE_TWO_KINECTS
 
         case OF_KEY_UP:
-            angle2++;
-            if(angle2<-30) angle2=-30;
-            kinects[b].setCameraTiltAngle(angle2);
+            angle_kinect2++;
+            if(angle_kinect2<-30) angle_kinect2=-30;
+            kinects[b].setCameraTiltAngle(angle_kinect2);
             break;
             
         case OF_KEY_DOWN:
-            angle2--;
-            if(angle2<-30) angle2=-30;
-            kinects[b].setCameraTiltAngle(angle2);
+            angle_kinect2--;
+            if(angle_kinect2<-30) angle_kinect2=-30;
+            kinects[b].setCameraTiltAngle(angle_kinect2);
             break;
             
 //        #endif

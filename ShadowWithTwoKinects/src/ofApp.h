@@ -30,19 +30,19 @@ public:
     void drawClockHand(string hand, float rotation);
     void drawShadowOnClock(string hand, float rotation, ofFbo fbo);
     
-
-
-    
     
     /* ----- shadow ----- */
     ofxPanel gui;
     
-    ofParameter<float> nearThreshold_shadow;
-    ofParameter<float> farThreshold_shadow;
+    ofxKinect kinects[2];
+    int a, b;
     
+    // kinect 1
     ofxKinect kinect1;
     int angle_kinect1;
     
+    ofParameter<float> nearThreshold_shadow;
+    ofParameter<float> farThreshold_shadow;
     
     ofxCvContourFinder contourFinder_shadow;
     ofxCvGrayscaleImage thresholdImg_shadow;
@@ -51,36 +51,18 @@ public:
     ofPixels ShadowPixels;
     ofTexture ShadowTexture;
     
-    
-    
+    // kinect 2
     ofxKinect kinect2;
+    int angle_kinect2;
     
-    int angle2;
+    ofParameter<float> nearThreshold_ceiling;
+    ofParameter<float> farThreshold_ceiling;
     
-    ofParameter<float> nearThreshold2;
-    ofParameter<float> farThreshold2;
-    ofxCvColorImage colorImg2;
-    ofxCvContourFinder contourFinder2;
-    ofxCvGrayscaleImage thresholdImg2;
-//    ofxCvGrayscaleImage resizeImg2;
+    ofxCvColorImage colorImg_ceiling;
     
-    ofParameter<float> minArea2;
-    ofParameter<float> maxArea2;
+    ofxCvContourFinder contourFinder_ceiling;
+    ofxCvGrayscaleImage thresholdImg_ceiling;
     
-    ofFbo maskFbo2;
-    ofFbo displayFbo2;
-    ofPixels contourFilledPix2;
-    ofTexture contourFilledTex2;
-    
-    
-    ofxKinect kinects[2];
-    int a, b;
-    
-    
-    
-    
-    
-    ofFbo mixFbo;
     
     
 };
