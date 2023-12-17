@@ -418,18 +418,18 @@ void ofApp::drawShadowOnClock(string hand, float rotation, ofFbo fbo, float scal
     
     if (hand == "second") {
         
-        ofTranslate(-80*3, -120*5);
-        fbo.draw(0, 0, 160*3 * scale, 120*5 * scale);
+        ofTranslate(-80 * 3, -120 * 5);
+        fbo.draw(0, 0, 160 * 3 * scale, 120 * 5 * scale);
         
     }else if (hand == "minute") {
         
-        ofTranslate(-80*3, -120*3);
-        fbo.draw(0, 0, 160*3 * scale, 120*3 * scale);
+        ofTranslate(-80*3, -120*4.5);
+        fbo.draw(0, 0, 160 * 3 * scale, 120 * 4.5 * scale);
         
     } else if (hand == "hour") {
         
-        ofTranslate(-80*3, -120*2);
-        fbo.draw(0, 0, 160*3 * scale, 120*2 * scale);
+        ofTranslate(-80 * 3, -120 * 3.5);
+        fbo.draw(0, 0, 160 * 3 * scale, 120 * 3.5 * scale);
         
     }
     ofPopMatrix();
